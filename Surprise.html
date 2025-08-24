@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Red Button – Random Filipino “What If” Quotes</title>
+
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center;     
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+    }
+    .center {
+      text-align: center;
+    }
+    #messages {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 500px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+    #messages p {
+      margin: 5px 0;
+      padding: 6px 10px;
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
+    .input-box {
+      margin-top: 15px;
+      display: flex;
+      gap: 6px;
+    }
+    .input-box input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
+    .input-box button {
+      padding: 8px 12px;
+      border: none;
+      background: #e11d48;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="center" aria-live="polite" aria-atomic="true">
+    <p id="quote" class="muted"></p>
+  </header>
+
+  <main class="stage center">
+    <div class="btn-wrap">
+      <input type="image" src="img/redButton.png" alt="Red Button" id="redButton" class="big-btn" aria-label="Randomize quote" width="150" height="100">
+    </div>
+
+    <div class="input-box">
+      <input type="text" id="userMessage" placeholder="Type your message..." />
+      <button id="submitMessage">Submit</button>
+    </div>
+
+    <div id="messages"></div>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCU2suRvK51DvpSKeXuuTPT8frXyCag_fY",
+  authDomain: "what-if-button.firebaseapp.com",
+  projectId: "what-if-button",
+  storageBucket: "what-if-button.firebasestorage.app",
+  messagingSenderId: "551116496130",
+  appId: "1:551116496130:web:a98e306a17e1b48ecf761b",
+  measurementId: "G-ZHYCXTFWD7"
+};
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Quotes
+    const QUOTES = [
+      "What if crush kita?",
+      "What if mahal din kita secretly?",
+      "What if tayo pala sa dulo?",
+      "What if ikaw pala yung matagal ko nang hinihintay?",
+      "What if may gusto ka rin sa’kin pero ‘di mo sinasabi?",
+      "What if hindi lang crush kundi love na pala?",
+      "What if ako rin pala yung iniisip mo gabi-gabi?",
+      "What if hindi ako nagka-crush sa’yo, mas madali sana?",
+      "What if may chance talaga tayo pero takot lang tayo?",
+      "What if sinagot mo ako, anong mangyayari?",
+      "What if simula ito ng love story natin?",
+      "What if hindi na lang ako umasa, pero worth it ka pala?",
+      "What if ako pala yung gusto mo matagal na?",
+      "What if inamin ko ngayon, anong sasabihin mo?",
+      "What if tama lahat ng nararamdaman ko sa’yo?",
+      "What if crush kita pero may gusto kang iba?"
+    ];
+
+    let queue = [];
+    function refillQueue() {
+      queue = [...QUOTES];
+      for (let i = queue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [queue[i], queue[j]] = [queue[j], queue[i]];
+      }
+    }
+    refillQueue();
+
+    const quoteEl = document.getElementById('quote');
+    const btn = document.getElementById('redButton');
+
+    function showNext() {
+      if (queue.length === 0) refillQueue();
+      const next = queue.pop();
+      quoteEl.textContent = next;
+    }
+    btn.addEventListener('click', showNext);
+
+    // Firestore collection
+    const messagesRef = collection(db, "messages");
+
+    // Submit message
+    document.getElementById("submitMessage").addEventListener("click", async () => {
+      const msgInput = document.getElementById("userMessage");
+      const text = msgInput.value.trim();
+      if (text) {
+        await addDoc(messagesRef, {
+          text,
+          timestamp: serverTimestamp()
+        });
+        msgInput.value = "";
+      }
+    });
+
+    // Listen to updates
+    const q = query(messagesRef, orderBy("timestamp", "desc"));
+    const messagesDiv = document.getElementById("messages");
+
+    onSnapshot(q, (snapshot) => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const p = document.createElement("p");
+        p.textContent = doc.data().text;
+        messagesDiv.appendChild(p);
+      });
+    });
+  </script>
+</body>
+</html>
